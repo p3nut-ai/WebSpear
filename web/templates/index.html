@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>WebSpear Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            card: { DEFAULT: "#0b0b0c", foreground: "#e6e6e6" },
+            border: "#1a1a1b",
+            muted: "#0f0f10",
+            accent: "#14b86a" /* green accent */
+          },
+          boxShadow: {
+            card: "0 1px 0 0 rgba(255,255,255,0.04), 0 1px 2px 0 rgba(0,0,0,0.4)"
+          },
+          borderRadius: { sh: "14px" }
+        }
+      }
+    };
+  </script>
+  <style>
+    .btn, .input, .select, .card { transition: all .18s ease; }
+    .btn:focus, .input:focus, .select:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(20,184,106,.25);
+    }
+    @keyframes loading { 0%{transform:translateX(-100%);}50%{transform:translateX(0);}100%{transform:translateX(100%);} }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
+  </style>
+</head>
+
+<body class="bg-black text-zinc-200 antialiased">
+
+  <!-- Header -->
+  <header class="border-b border-border/80 bg-black/60 backdrop-blur supports-[backdrop-filter]:bg-black/40">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <h1 class="text-xl md:text-2xl font-semibold tracking-tight text-white">
+        ⚔ WebSpear <span class="text-accent">Dashboard</span>
+      </h1>
+      <span class="text-xs md:text-sm text-zinc-400">Author: <span class="text-white">JNTHN</span></span>
+    </div>
+  </header>
+
+  <!-- Main -->
+  <main class="max-w-7xl mx-auto px-6 py-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+
+    <!-- Left Column -->
+    <section class="md:col-span-2 space-y-6">
+
+      <!-- Start New Scan -->
+      <div class="card bg-card border border-border rounded-sh shadow-card">
+        <div class="p-4 md:p-5 space-y-3">
+          <h2 class="text-lg font-medium text-white">🧭 Start New Scan</h2>
+          <form method="POST" action="/scan" class="grid grid-cols-1 md:grid-cols-6 gap-2">
+            <input name="scan_url" type="url" placeholder="https://example.com"
+                   class="input md:col-span-5 bg-muted text-white placeholder:text-zinc-500 border border-border rounded-lg px-3 py-2 focus:border-accent"
+                   required />
+            <button type="submit"
+                    class="btn md:col-span-1 inline-flex items-center justify-center rounded-lg px-4 py-2 bg-white text-black font-medium hover:bg-zinc-100 active:bg-zinc-200 border border-white/10">
+              Start
+            </button>
+          </form>
+          <p class="text-xs text-zinc-500">Enter a target URL and press <span class="text-accent">Start</span>. The scan runs on the server and appears below when complete.</p>
+        </div>
+      </div>
+
+      <!-- Select Target -->
+      <div class="card bg-card border border-border rounded-sh shadow-card">
+        <div class="p-4 md:p-5 space-y-4">
+          <h2 class="text-lg font-medium text-white">🎯 Select Target</h2>
+
+          <form method="GET" action="/" class="space-y-2">
+            <label for="target" class="block text-sm text-zinc-400">Choose a scanned target</label>
+            <select name="target" id="target"
+                    class="select w-full bg-muted text-white border border-border rounded-lg px-3 py-2 focus:border-accent">
+              {% for t in targets %}
+                <option value="{{ t.id }}" {% if selected_target and selected_target.id == t.id %}selected{% endif %}>
+                  {{ t.url }}
+                </option>
+              {% endfor %}
+            </select>
+            <div class="flex gap-2">
+              <button type="submit" class="btn px-4 py-2 rounded-lg bg-accent text-black font-medium hover:opacity-90">
+                Load
+              </button>
+              <a href="/" class="btn px-4 py-2 rounded-lg bg-muted border border-border text-white hover:bg-zinc-900">
+                Refresh
+              </a>
+            </div>
+          </form>
+
+          {% if selected_target %}
+          <div class="pt-3 border-t border-border text-sm space-y-1">
+            <p><span class="text-zinc-400">URL:</span> <span class="text-white">{{ selected_target.url }}</span></p>
+            <p><span class="text-zinc-400">IP:</span> <span class="text-white">{{ selected_target.ip }}</span></p>
+            <p><span class="text-zinc-400">Scanned:</span> <span class="text-white">{{ selected_target.timestamp }}</span></p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Endpoints -->
+      <div class="card bg-card border border-border rounded-sh shadow-card">
+        <div class="p-4 md:p-5">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-medium text-white">🔗 Endpoints</h2>
+            <div class="text-xs text-zinc-400">
+              {% set cnt_internal = selected_target.final_internal_links|length if selected_target else 0 %}
+              {% set cnt_query = selected_target.endpoints_with_query|length if selected_target else 0 %}
+              {% set cnt_forms = selected_target.form_endpoints|length if selected_target else 0 %}
+              {% set cnt_js = selected_target.js_endpoints|length if selected_target else 0 %}
+              <span class="mr-2">Internal: <span class="text-white">{{ cnt_internal }}</span></span>
+              <span class="mr-2">Query: <span class="text-white">{{ cnt_query }}</span></span>
+              <span class="mr-2">Forms: <span class="text-white">{{ cnt_forms }}</span></span>
+              <span>JS: <span class="text-white">{{ cnt_js }}</span></span>
+            </div>
+          </div>
+
+          {% if selected_target and (cnt_internal or cnt_query or cnt_forms or cnt_js) %}
+          <div class="mt-4 grid md:grid-cols-2 gap-4 text-sm">
+
+            {% for group, label, listId, items in [
+              ('final_internal_links','Internal Links','internal-list',selected_target.final_internal_links),
+              ('endpoints_with_query','Endpoints with Query','query-list',selected_target.endpoints_with_query),
+              ('form_endpoints','Form Action Endpoints','form-list',selected_target.form_endpoints),
+              ('js_endpoints','JavaScript Files','js-list',selected_target.js_endpoints)
+            ] %}
+              {% if items and items|length %}
+              <div class="bg-muted/60 border border-border rounded-lg">
+                <div class="flex items-center justify-between px-3 py-2">
+                  <h3 class="font-medium text-white">{{ label }}</h3>
+                  <button onclick="copyList('{{ listId }}')"
+                          class="btn text-xs px-2 py-1 rounded-md bg-black border border-border text-white hover:bg-zinc-900">
+                    Copy
+                  </button>
+                </div>
+                <ul id="{{ listId }}" class="max-h-48 overflow-auto px-3 pb-3 space-y-1">
+                  {% for link in items %}
+                    <li class="break-words">
+                      <a href="{{ link }}" target="_blank" rel="noopener noreferrer"
+                         class="text-white hover:text-accent underline-offset-2 hover:underline">{{ link }}</a>
+                    </li>
+                  {% endfor %}
+                </ul>
+              </div>
+              {% endif %}
+            {% endfor %}
+
+          </div>
+          {% else %}
+            <p class="text-zinc-500 mt-3">No endpoints gathered for this target.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Vulnerabilities -->
+      <div class="card bg-card border border-border rounded-sh shadow-card">
+        <div class="p-4 md:p-5">
+          <h2 class="text-lg font-medium text-white">🧨 Vulnerabilities Found</h2>
+          {% if selected_target and selected_target.findings and selected_target.findings|length %}
+            <ul class="mt-3 space-y-2">
+              {% for finding in selected_target.findings %}
+                <li class="border border-border rounded-lg p-3 bg-muted/60">
+                  <p class="font-semibold text-accent">[{{ finding.type | upper }}]</p>
+                  <p><span class="text-zinc-400">URL:</span> {{ finding.url }}</p>
+                  <p><span class="text-zinc-400">Payload:</span>
+                    <code class="bg-black/60 border border-border px-1 py-0.5 rounded text-white">{{ finding.payload }}</code>
+                  </p>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-zinc-500 mt-2">No vulnerabilities found.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Scan Log -->
+      <div class="card bg-card border border-border rounded-sh shadow-card">
+        <div class="p-4 md:p-5">
+          <h2 class="text-lg font-medium text-white">📜 Scan Log</h2>
+          <pre class="mt-3 bg-black/70 text-zinc-200 border border-border rounded-lg p-3 text-sm overflow-x-auto">{{ (selected_target and selected_target.log) or "No log data available." }}</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column -->
+    <aside class="space-y-6">
+      {% if selected_target %}
+      <!-- Recon Info -->
+      <div class="card bg-card border border-border rounded-sh shadow-card">
+        <div class="p-4 md:p-5">
+          <h2 class="text-lg font-medium text-white">🔎 Recon Info</h2>
+          <div class="mt-2 space-y-1 text-sm">
+            <p><span class="text-zinc-400">WordPress:</span> <span class="text-white">{{ selected_target.wp_version or "—" }}</span>
+              {% if selected_target.wp_cves and selected_target.wp_cves|length %}
+                <span class="ml-1 text-accent">(Vulnerable)</span>
+              {% endif %}
+            </p>
+            <p><span class="text-zinc-400">Bootstrap:</span> <span class="text-white">{{ selected_target.bs_version or "—" }}</span>
+              {% if selected_target.bootstrap_cves and selected_target.bootstrap_cves|length %}
+                <span class="ml-1 text-accent">(Vulnerable)</span>
+              {% endif %}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CVEs -->
+      <div class="card bg-card border border-border rounded-sh shadow-card">
+        <div class="p-4 md:p-5">
+          <h2 class="text-lg font-medium text-white">🛡️ CVEs Detected</h2>
+          {% set wp_list = (selected_target.wp_cves or []) %}
+          {% set bs_list = (selected_target.bootstrap_cves or []) %}
+          {% if (wp_list and wp_list|length) or (bs_list and bs_list|length) %}
+            <ul class="mt-3 list-disc list-inside text-sm text-zinc-200 space-y-1">
+              {% for cve in (wp_list + bs_list) %}
+                <li><span class="hover:text-accent cursor-default">{{ cve }}</span></li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-zinc-500 mt-2">No known CVEs for this target.</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </aside>
+  </main>
+  
+  <!-- Footer -->
+  <footer class="text-center text-zinc-500 text-xs md:text-sm mt-10 pb-6">
+    WebSpear &copy; 2025 — SQLite-Powered Recon Engine ⚔
+  </footer>
+
+  <!-- Splash Screen -->
+  <div id="splash-screen"
+       class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black text-white transition-opacity duration-700 opacity-100">
+     <img src="/static/splash.gif" alt="WebSpear Loading"
+         class="w-[500px] h-[500px] object-contain mb-6 rounded-md shadow-lg" />
+    <div class="flex flex-col items-center space-y-3">
+      <div class="text-white text-2xl font-semibold tracking-widest">
+        WebSpear
+      </div>
+      <p class="text-xs text-zinc-400 font-mono tracking-wide">
+        Initializing Recon Engine...
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Copy utility
+    function copyList(listId) {
+      const ul = document.getElementById(listId);
+      if (!ul) return;
+      const anchors = ul.querySelectorAll('a');
+      const lines = Array.from(anchors).map(a => a.href.trim()).filter(Boolean);
+      if (!lines.length) return alert('Nothing to copy.');
+      navigator.clipboard.writeText(lines.join('\n')).then(() => {
+        const btn = event.target;
+        const prev = btn.textContent;
+        btn.textContent = 'Copied';
+        setTimeout(() => btn.textContent = prev, 900);
+      });
+    }
+
+    // Splash screen logic
+    document.addEventListener("DOMContentLoaded", () => {
+      const splash = document.getElementById("splash-screen");
+
+      if (sessionStorage.getItem("splashShown")) {
+        splash.style.display = "none";
+        return;
+      }
+
+      sessionStorage.setItem("splashShown", "true");
+
+      setTimeout(() => {
+        splash.style.animation = "fadeOut 0.8s ease forwards";
+        setTimeout(() => splash.remove(), 800);
+      }, 4000);
+    });
+  </script>
+</body>
+</html>
