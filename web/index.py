@@ -4,7 +4,6 @@ import sqlite3
 import os
 import json
 
-# make sure these are correct relative imports in your project layout
 from exploit_modules.exploits import Exploits
 from database.db_init import init_db
 
@@ -13,7 +12,6 @@ main_db_path =  os.path.join(base_dir, "..", "webspear.db")
 
 app = Flask(__name__)
 
-# ensure DB/tables exist when web app starts
 init_db(main_db_path)
 
 @app.route('/', methods=['GET'])
@@ -25,7 +23,7 @@ def index():
     if selected_id:
         selected_target = next((t for t in targets if str(t["id"]) == selected_id), None)
     elif targets:
-        selected_target = targets[0]  # newest first due to ORDER BY in get_all_targets()
+        selected_target = targets[0] 
 
     return render_template(
         "index.html",
@@ -43,21 +41,17 @@ def scan():
     """
     scan_url = request.form.get("scan_url", "").strip()
     if not scan_url:
-        # no input provided -> redirect back
         return redirect(url_for('index'))
 
-    # create and run Exploits scanner
     try:
         exploits = Exploits(scan_url)
-        exploits.start_hunting()   # scanner already saves results into DB
+        exploits.start_hunting()   
     except Exception as e:
-        # log error (could be more sophisticated)
         print(f"[!] Scan error for {scan_url}: {e}")
 
-    # redirect to dashboard (newest entry should be selected)
     return redirect(url_for('index'))
 
-def run_flask_server(host="0.0.0.0", port=5000):
+def run_flask_server(host="0.0.0.0", port=5005):
     print("[+] Starting Web UI")
     app.run(debug=True, host=host, port=port)
 
@@ -65,7 +59,6 @@ def get_all_targets(db_path=main_db_path):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    # Order newest first (use timestamp or id depending on your schema)
     cursor.execute("SELECT * FROM targets ORDER BY timestamp DESC, id DESC")
 
     columns = [desc[0] for desc in cursor.description]
@@ -74,7 +67,6 @@ def get_all_targets(db_path=main_db_path):
     for row in cursor.fetchall():
         record = dict(zip(columns, row))
 
-        # Parse JSON array fields safely
         for field in [
             "final_internal_links",
             "endpoints_with_query",
@@ -88,7 +80,6 @@ def get_all_targets(db_path=main_db_path):
             except Exception:
                 record[field] = []
 
-        # Normalize names for the template
         record["wp_version"] = record.get("wp_version", "") or ""
         record["bs_version"] = record.get("bs_version", "") or ""
         record["wp_cves"] = record.get("wp_vulnerability", []) or []
@@ -101,6 +92,5 @@ def get_all_targets(db_path=main_db_path):
     conn.close()
     return results
 
-# allow running as a script for dev convenience
 if __name__ == "__main__":
     run_flask_server()

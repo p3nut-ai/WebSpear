@@ -5,8 +5,6 @@ web pentesting automation from recon to exploit to reporting
 
 author : 0slo
 
-
-
 Todos:
     - Cli functions [done]
     - Web dashboard [done]

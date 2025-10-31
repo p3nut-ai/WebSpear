@@ -17,6 +17,7 @@ def init_db(db_path="webspear.db"):
         wp_vulnerability TEXT,
         bs_version TEXT,
         bs_vulnerability TEXT,
+        vuln_types TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     """)
