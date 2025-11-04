@@ -17,6 +17,8 @@ Todos:
 
 from termcolor import colored
 import time
+from cli import banner as bn
+
 
 # CLI packages
 import argparse
@@ -70,7 +72,7 @@ def main():
 
     if args.cli:
         print(colored(f"[+] Running CLI scan for: {target_url}", "yellow"))
-
+        print(bn)
         if args.all:
             exploits.run_xss()
             exploits.run_sqli()
