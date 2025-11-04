@@ -17,7 +17,6 @@ Todos:
 
 from termcolor import colored
 import time
-from cli import banner as bn
 
 
 # CLI packages
@@ -34,6 +33,35 @@ from exploit_modules.exploits import Exploits
 
 # import yung lightweight DB natin
 from database.db_init import init_db
+
+def cli_banner():
+
+    banner = print(r""" 
+
+                                 ______
+                              .-"      "-.
+                             /            \
+                            |              |
+                            |,  .-.  .-.  ,|
+                              )(_o/  \o_)(       OPERATION : WEBSPEAR        
+                             /     /\     \      AUTHOR : 0slo
+                  (@_       (_     ^^     _)
+            _     ) \_______\__|IIIIII|__/__________________________
+            (_)@8@8{}<________|-\IIIIII/-|___________________________>
+                    )_/       \          /
+                    (@         `--------`
+
+    
+    """)
+
+    return banner
+
+
+
+
+
+
+
 
 
 
@@ -72,14 +100,10 @@ def main():
 
     if args.cli:
         print(colored(f"[+] Running CLI scan for: {target_url}", "yellow"))
-        print(bn)
+        cli_banner()
+        
         if args.all:
-            exploits.run_xss()
-            exploits.run_sqli()
-            exploits.run_lfi_rfi()
-            exploits.run_js_scraper()
-            exploits.run_ddos()
-            exploits.run_playwright_login_bruteforce()
+           exploits.start_exploit_engine()
         else:
             if args.xss:
                 exploits.run_xss()
@@ -93,7 +117,10 @@ def main():
                 exploits.run_ddos()
             if args.brute:
                 exploits.run_playwright_login_bruteforce()
-
+            else:
+                print(colored("[-] You forgot to select attack module", "red"))
+                exit()
+                
         print(colored("[✓] Scan complete. Results saved to database.", "green"))
         return
 
