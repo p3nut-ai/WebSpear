@@ -18,9 +18,15 @@ def init_db(db_path="webspear.db"):
         bs_version TEXT,
         bs_vulnerability TEXT,
         vuln_types TEXT,
+        xss_findings TEXT,
+        sqli_findings TEXT,
+        lfi_rfi_findings TEXT,
+        ddos_results TEXT,
+        js_findings TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     """)
 
     conn.commit()
     conn.close()
+

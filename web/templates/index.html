@@ -162,15 +162,61 @@
       <div class="card bg-card border border-border rounded-sh shadow-card">
         <div class="p-4 md:p-5">
           <h2 class="text-lg font-medium text-white">🧨 Vulnerabilities Found</h2>
-          {% if selected_target and selected_target.findings and selected_target.findings|length %}
+
+          {% set findings = [] %}
+          {% if selected_target %}
+            {% set findings = findings 
+              + (selected_target.xss_findings or []) 
+              + (selected_target.sqli_findings or []) 
+              + (selected_target.lfi_rfi_findings or []) 
+              + (selected_target.js_findings or []) %}
+          {% endif %}
+
+          {% if findings and findings|length %}
             <ul class="mt-3 space-y-2">
-              {% for finding in selected_target.findings %}
-                <li class="border border-border rounded-lg p-3 bg-muted/60">
-                  <p class="font-semibold text-accent">[{{ finding.type | upper }}]</p>
-                  <p><span class="text-zinc-400">URL:</span> {{ finding.url }}</p>
-                  <p><span class="text-zinc-400">Payload:</span>
-                    <code class="bg-black/60 border border-border px-1 py-0.5 rounded text-white">{{ finding.payload }}</code>
+              {% for finding in findings %}
+                <li class="border border-border rounded-lg p-3 bg-muted/60 space-y-1">
+                  <p class="font-semibold text-accent">
+                    [{{ finding.type | upper if finding.type else 'UNKNOWN' }}]
                   </p>
+
+                  {% if finding.url %}
+                    <p>
+                      <span class="text-zinc-400">URL:</span>
+                      <a href="{{ finding.url }}" target="_blank" rel="noopener" class="text-white hover:text-accent underline">
+                        {{ finding.url }}
+                      </a>
+                    </p>
+                  {% endif %}
+
+                  {% if finding.param %}
+                    <p><span class="text-zinc-400">Parameter:</span> <code class="text-white">{{ finding.param }}</code></p>
+                  {% endif %}
+
+                  {% if finding.payload %}
+                    <p>
+                      <span class="text-zinc-400">Payload:</span>
+                      <code class="bg-black/60 border border-border px-1 py-0.5 rounded text-white">{{ finding.payload }}</code>
+                    </p>
+                  {% endif %}
+
+                  {% if finding.fields %}
+                    <p>
+                      <span class="text-zinc-400">Fields:</span>
+                      <code class="text-white">{{ finding.fields | join(', ') }}</code>
+                    </p>
+                  {% endif %}
+
+                  {% if finding.match %}
+                    <p><span class="text-zinc-400">Match:</span> <code class="text-white">{{ finding.match }}</code></p>
+                  {% endif %}
+
+                  {% if finding.context %}
+                    <p>
+                      <span class="text-zinc-400">Context:</span>
+                      <code class="text-white">{{ finding.context | truncate(200) }}</code>
+                    </p>
+                  {% endif %}
                 </li>
               {% endfor %}
             </ul>
@@ -179,6 +225,7 @@
           {% endif %}
         </div>
       </div>
+
 
       <!-- Scan Log -->
       <div class="card bg-card border border-border rounded-sh shadow-card">

@@ -1,193 +1,195 @@
+# ⚔️ WebSpear: Automated Web Recon and Exploitation Framework
 
-# ⚔️ WebSpear – Automated Web Vulnerability Framework
-
-**WebSpear** is an offensive security framework built in Python, designed for ethical web application penetration testing and vulnerability research.  
-It focuses on **automation**, **realism**, and **offensive depth**, supporting modules from **XSS** to **DoS simulation**, **JS endpoint analysis**, and **credential brute-forcing**.
-
----
-
-## 🧩 Key Features
-
-### 🕸️ Recon & Crawler
-- Intelligent web crawler capable of identifying:
-  - Internal and external links  
-  - Query-based endpoints  
-  - JavaScript endpoints  
-  - Form submission points (`<form>`, `fetch`, etc.)
-- Extracts all assets needed for post-recon exploitation.
+**WebSpear** is a modern, modular web reconnaissance and vulnerability scanner.  
+It crawls, analyzes, and attacks web applications — including authenticated ones — using a mix of passive recon and active exploitation modules.
 
 ---
 
-## 💀 Exploitation Modules
+## 🚀 Features
 
-### 🧨 Cross-Site Scripting (XSS)
-
-#### 🔹 DOM-Based XSS
-- Parses all URLs with query parameters.
-- Injects unique tracking payloads (UUID-based).
-- Checks reflection in:
-  - HTML text
-  - `<script>` blocks
-  - Inline event handlers
-- Identifies vulnerable parameters and context.
-
-#### 🔹 Reflected & Stored XSS via Forms
-- Auto-detects form endpoints and injection points.
-- Submits payloads via both `GET` and `POST` methods.
-- Tests multiple payload encodings:
-  - `<script>alert(1)</script>`
-  - Encoded forms (`&lt;script&gt;`, `&#x3C;script&#x3E;`)
-  - HTML and image-based payloads
-- Detects reflection and persistence in response content.
-
-#### 🧠 Payload Intelligence
-- HTML context awareness (avoids breaking forms).  
-- Supports `<textarea>` and hidden fields.  
-- Form action fallback detection (submits even if JS handles form logic).  
-- Phase 1 (DOM reflection) → Phase 2 (Payload execution).
+- 🌐 URL Crawler & Endpoint Finder
+- 🧩 JavaScript Scraper & Sensitive Data Detector
+- 📄 Form Detection (POST/GET)
+- 🎯 WordPress & Bootstrap Version Detection + CVE Matching
+- 🔐 Login Bruteforce via Playwright
+- 🔍 Exploit Modules:
+  - Reflected **XSS**
+  - Error-based & Time-based **SQL Injection**
+  - **LFI / RFI / Path Traversal**
+  - **JS Endpoint Analysis**
+  - Basic **DoS / DDoS** via parameter spam
+- 📦 Result Storage via SQLite
+- 📊 Web Dashboard (Flask + Tailwind CSS)
+- ☁️ Session Cookie Persistence
 
 ---
 
-### 🌊 Denial of Service (DoS) Simulation
-- Simulates **form-spam DoS attacks** to identify rate-limit and captcha bypass issues.
-- Features:
-  - Multi-threaded flood (`ThreadPoolExecutor`)
-  - Header rotation (`User-Agent`, `X-Forwarded-For`)
-  - Optional proxy pool support
-  - CSRF token discovery and reuse
-  - Adaptive behavior:  
-    - Phase 1 → 20 probe requests  
-    - Phase 2 → Full flood if target is responsive
-
----
-
-### ⚙️ JavaScript Endpoint Analysis
-- Scans internal & external JS files for:
-  - API keys, tokens, AWS credentials  
-  - Hardcoded passwords or secrets  
-  - Sensitive endpoints (`fetch`, `axios`, `XMLHttpRequest`)  
-  - DOM-based sinks (`document.write`, `innerHTML`)
-- Extracts **fetch target domains** for deeper exploitation.
-- Maps relationships between JS files and backend APIs.
-
----
-
-### 🔐 Login Form Detection & Brute Force
-- Automatically detects login forms by analyzing:
-  - Form structure (`<input type="password">`)
-  - Button text (`login`, `sign in`)
-  - Hidden CSRF tokens
-- Brute-forces login using wordlists (`usernames.txt`, `passwords.txt`).
-- Supports fallback **Playwright automation** for:
-  - JS-based logins
-  - Event-driven form submissions
-- Extracts cookies & session data upon successful login.
-
----
-
-## 🧪 Local WebSpear Lab
-To safely test WebSpear’s modules, a **Flask-based local lab** is included.
-
-### Features:
-- Endpoints for:
-  - GET & POST forms  
-  - DOM-based XSS reflection  
-  - JS-based form submission  
-  - CSRF-protected form  
-- Real-time request counter & request log display (via SQLite)
-- WebSocket-like live refresh for showcasing DoS and brute-force simulations
-
----
-
-## 📊 Dashboard UI
-- Built using **TailwindCSS**
-- Features:
-  - Live vulnerability tracking  
-  - Realtime DoS visualization (active request counter)  
-  - Target summary: URLs, IPs, tech stack  
-  - Vulnerability breakdown per endpoint  
-  - CVE mapping (WordPress / Bootstrap versions)
-- Data persistence via SQLite for lightweight storage.
-
----
-
-## 🧠 Architecture Overview
+## 📁 Project Structure
 
 ```
-WebSpear/
+webspear/
 ├── exploit_modules/
-│   ├── exploits.py           # Core engine: XSS, DoS, Login brute-force, JS analyzer
-│   ├── utils.py              # Helper functions (regex, DB, payload generation)
-│   └── wp_db/                # Local CVE database for tech detection
-├── dashboards/
-│   └── index.py            # Tailwind dashboard for visualizing results
-├── testing_ground/
-│   └── index.py                # Flask-based XSS/CSRF/DoS simulation lab
-├── webspear.db               # SQLite main database
-├── usernames.txt             # Brute-force usernames
-├── passwords.txt             # Brute-force passwords
+│   ├── exploits.py                 # Main engine
+│   ├── xss.py                      # XSS detection
+│   ├── sqli.py                     # SQL injection
+│   ├── lfi_rfi.py                  # Path traversal
+│   ├── js_scraper.py               # JS endpoint scraping
+│   ├── dos_fuzzer.py               # DoS module
+│   ├── playwright_login.py         # Playwright-based login
+│
+├── database/
+│   ├── db_init.py                  # SQLite schema
+│   ├── session_cookie_utils.py     # Cookie saving/loading
+│
+├── static/
+│   └── splash.gif                  # Dashboard splash
+│
+├── templates/
+│   └── index.html                  # Tailwind-powered UI
+│
+├── web.py                          # Flask dashboard
+├── main.py                         # CLI runner
+├── webspear.db                     # Auto-generated DB
 └── README.md
 ```
 
 ---
 
-## 🚀 How to Run
+## 🧠 How It Works
 
-### Install dependencies:
+1. 🕷️ Crawl the target — discover links, forms, JS, etc.
+2. 📑 Analyze page for CMS/libraries (e.g., WordPress, Bootstrap)
+3. 💥 Run enabled exploits (XSS, SQLi, LFI, DoS, etc.)
+4. 💾 Store results in SQLite
+5. 🌐 View output via dashboard or CLI
+
+---
+
+## 🖥️ CLI Usage
+
+### 🔹 Basic Scan
+
+```bash
+python main.py -s https://target.com --cli --all
+```
+
+### 🔹 Targeted Modules
+
+```bash
+python main.py -s https://target.com --cli --xss --sqli --js
+```
+
+### 🔹 Start Dashboard UI
+
+```bash
+python main.py -s https://target.com --dashboard
+```
+
+---
+
+## 🧪 CLI Flags
+
+| Flag         | Description                                 |
+|--------------|---------------------------------------------|
+| `-s URL`     | Target to scan                              |
+| `--cli`      | Run in terminal-only mode                   |
+| `--dashboard`| Start Flask-based web UI                    |
+| `--all`      | Run all exploit modules                     |
+| `--xss`      | Enable XSS module                           |
+| `--sqli`     | Enable SQL Injection module                 |
+| `--lfi`      | Enable LFI/RFI/Path Traversal detection     |
+| `--js`       | Enable JS endpoint inspection               |
+| `--ddos`     | Enable basic DoS check                      |
+| `--brute`    | Enable login bruteforce via Playwright      |
+
+---
+
+## 📊 Web Dashboard (Flask)
+
+- 🔍 Start and track scans
+- 📂 Explore discovered endpoints
+- 🛠️ View all vulnerabilities
+- 🛡️ Matched CVEs from WordPress/Bootstrap versions
+- 📜 Review scan logs
+- 🎨 Fully responsive dark-mode UI (TailwindCSS)
+
+> Start with:
+```bash
+python main.py -s https://target.com --dashboard
+```
+
+---
+
+## 🔐 Authentication Support
+
+If login is required:
+- You can log in manually via the browser
+- `session_cookies.json` will be saved
+- Reused on all future scans
+
+Or:
+- Run `--brute` to automate login attempts with provided wordlists
+
+---
+
+## 🧾 Database
+
+All findings are stored in:
+```
+webspear.db
+```
+
+Including:
+- Discovered endpoints
+- All types of vulns (XSS, SQLi, etc.)
+- Detected CVEs
+- Timestamps and full logs
+
+---
+
+## 📦 Install Requirements
+
 ```bash
 pip install -r requirements.txt
+playwright install
 ```
 
-### Run the local lab:
-```bash
-python testing_ground/index.py
-```
-
-### Run WebSpear exploit engine:
-```bash
-python exploit_modules/exploits.py --scan https://target.site
-```
-
-### Optional CLI arguments:
-| Flag | Description |
-|------|--------------|
-| `--url` | Target URL |
-| `--d` | Launch dashboard UI |
-| `--headless` | Run scans without UI |
-| `--fast` | Quick scan mode |
+> Required for headless login automation and JS interaction
 
 ---
 
-## 📋 Features Completed
-- ✅ Crawler / Link Enumerator  
-- ✅ DOM XSS  
-- ✅ Form XSS  
-- ✅ DoS (form flood)  
-- ✅ JS Analyzer (Fetch, secrets, tokens)  
-- ✅ Login Finder  
-- ✅ Brute-force Engine  
-- ✅ Playwright Auto-Login  
-- ✅ Realtime Dashboard + Lab  
+## 📌 CVE Data
+
+Located in JSON files:
+- `wp_vulns.json`
+- `bootstrap_vulns.json`
+
+Used for offline matching — no network request needed.
 
 ---
 
-## 🧱 Upcoming Modules
-| Feature | Status | Description |
-|----------|----------|-------------|
-| SQL Injection Detection | 🧩 Planned | Fuzz params and forms for SQL-based injection |
-| LFI/RFI / Path Traversal | 🧩 Planned | Identify file inclusion and traversal vulnerabilities |
-| Authenticated Scanning | 🧩 Planned | Use saved cookies from login for deeper scan |
-| Screenshot Capture | 🧩 Planned | Visual confirmation of vulnerabilities via Playwright |
-| CVE Matching Expansion | 🧩 Planned | Add more frameworks (React, Angular, etc.) |
+## 🧷 Disclaimer
+
+This tool is for **educational and authorized penetration testing only**.  
+Do **not** scan or attack any system without proper permission.
 
 ---
 
-## ⚠️ Legal Disclaimer
-> WebSpear is designed for **ethical security testing, education, and research** only.  
-> Do not use this tool against systems you do not own or have explicit permission to test.
+## ✍️ Author
+
+Made with 🖤 by **0slo**  
+
 
 ---
 
-## 🧑‍💻 Author
-**WebSpear**  
-Developed by **0slo** — building offensive automation for next-gen cybersecurity research.
+## 🧩 TODO
+
+- [ ] Severity scoring per CVE
+- [ ] PDF/HTML report generator
+- [ ] Better Playwright login detection
+- [ ] Sitemap export
+- [ ] Scanner speed modes (fast/deep)
+
+---
+
+

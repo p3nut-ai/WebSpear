@@ -16,7 +16,7 @@ Todos:
 '''
 
 from termcolor import colored
-
+import time
 
 # CLI packages
 import argparse
@@ -33,64 +33,73 @@ from exploit_modules.exploits import Exploits
 # import yung lightweight DB natin
 from database.db_init import init_db
 
+
+
 def main():
     init_db()
-    # webapp.run_flask_server()
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="WebSpear: Automated Web Recon and Exploitation Framework")
+    parser.add_argument('-s', '--scan', help="Target URL to scan", type=str)
 
-    parser.add_argument('-s', '--scan', help="Set the target URL for victim" , type=str)
-    parser.add_argument('-d', '--dashboard', help="enable dashboard UI", action="store_true")
-    parser.add_argument('-c', '--cli', help="enable CLI no web dashboard", action="store_true")
+    parser.add_argument('-d', '--dashboard', help="Enable Dashboard UI", action="store_true")
+    parser.add_argument('-c', '--cli', help="Run in CLI mode (no dashboard)", action="store_true")
+
+    parser.add_argument('--all', help="Enable all exploit modules", action="store_true")
+    parser.add_argument('--xss', help="Enable XSS scanner", action="store_true")
+    parser.add_argument('--sqli', help="Enable SQL injection scanner", action="store_true")
+    parser.add_argument('--lfi', help="Enable LFI/RFI/path traversal detection", action="store_true")
+    parser.add_argument('--js', help="Enable JavaScript endpoint inspection", action="store_true")
+    parser.add_argument('--ddos', help="Enable basic DoS fuzzing", action="store_true")
+    parser.add_argument('--brute', help="Enable login bruteforce via Playwright", action="store_true")
+
     args = parser.parse_args()
 
-    # check if nag provide ng url
-
-    if args.scan is None:
-        print(colored("[!] Error: target url not provided [!] \n", "red"))
-        print("use -h to display help")
-        exit()
- 
-    # Working on this first
-    elif args.scan and args.dashboard is not None:
-
-        '''
-            FLOW
-
-            get target
-            call exploits
-            run the crawler
-            get the HTML code 
-            analyze HTML code
-            get the internal links
-            form endpoints
-            js files
-            run exploits (IDOR, SSRF, XSS, SQLi, DDOS)
-            generate report based on the findings
-        '''
-
-
-        print("runing dashboard with URL target")   
-        
-        target_url = args.scan
-
-        exploits = Exploits(target_url)
-
-        exploits.start_hunting()
-        print("Running Flask now")
-        webapp.run_flask_server()
-
-    elif args.scan and args.dashboard is not None:
-        print("runing CLI only with URL target")   
-
-
-    else:
-        print("Error running WebSpear use -h for help")
+    if not args.scan:
+        print(colored("[!] Error: target URL not provided", "red"))
+        print("🧠 Tip: use -h to display available options")
         exit()
 
+    target_url = args.scan
+    exploits = Exploits(target_url)
+
+    if args.dashboard:
+        print(colored(f"[+] Starting dashboard for target: {target_url}", "yellow"))
+        from web import run_flask_server 
+        run_flask_server()
+        return
+
+    if args.cli:
+        print(colored(f"[+] Running CLI scan for: {target_url}", "yellow"))
+
+        if args.all:
+            exploits.run_xss()
+            exploits.run_sqli()
+            exploits.run_lfi_rfi()
+            exploits.run_js_scraper()
+            exploits.run_ddos()
+            exploits.run_playwright_login_bruteforce()
+        else:
+            if args.xss:
+                exploits.run_xss()
+            if args.sqli:
+                exploits.run_sqli()
+            if args.lfi:
+                exploits.run_lfi_rfi()
+            if args.js:
+                exploits.run_js_scraper()
+            if args.ddos:
+                exploits.run_ddos()
+            if args.brute:
+                exploits.run_playwright_login_bruteforce()
+
+        print(colored("[✓] Scan complete. Results saved to database.", "green"))
+        return
+
+    print(colored("[!] You must specify --cli or --dashboard", "red"))
+    print("💡 Example: python main.py -s https://target.com --cli --all")
+    exit()
 
 
 
-# Run tong function if nirun yung main.py direcly 
 if __name__ == "__main__":
     main()
