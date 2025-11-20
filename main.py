@@ -24,7 +24,9 @@ import argparse
 
 
 # Web Dashboard
+from web import *
 from web import index as webapp
+from web.index import run_flask_server 
 
 
 # exploits module
@@ -61,10 +63,6 @@ def cli_banner():
 
 
 
-
-
-
-
 def main():
     init_db()
 
@@ -94,7 +92,6 @@ def main():
 
     if args.dashboard:
         print(colored(f"[+] Starting dashboard for target: {target_url}", "yellow"))
-        from web import run_flask_server 
         run_flask_server()
         return
 

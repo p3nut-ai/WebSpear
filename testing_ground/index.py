@@ -248,4 +248,4 @@ def secure_form():
 
 if __name__ == '__main__':
     print("[+] Web lab running at http://localhost:5000")
-    app.run(debug=True)
+    app.run(debug=True, port=5010)
